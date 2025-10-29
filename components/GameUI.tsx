@@ -1,5 +1,5 @@
 import React from 'react';
-import { GameState, PlayerState, Piece } from '../types';
+import { GameState, PlayerState, Piece, PlayerColor } from '../types';
 import { PIECE_DATA } from '../constants';
 import StatusEffects from './StatusEffects';
 
@@ -18,12 +18,12 @@ const formatTime = (seconds: number): string => {
 };
 
 const CapturedPieces: React.FC<{ pieces: Piece[] }> = ({ pieces }) => (
-  <div className="flex flex-wrap gap-2 h-12 items-center text-lg">
+  <div className="flex flex-wrap gap-2 h-12 items-center text-2xl">
     {pieces.map((p, i) => (
       <span
         key={i}
-        className={`${p.color === 'white' ? 'text-orange-400' : 'text-purple-400'}`}
-        style={{ textShadow: p.color === 'white' ? '0 0 5px #f97316' : '0 0 5px #a855f7' }}
+        className={`${p.color === 'white' ? 'text-orange-400' : 'text-purple-600'}`}
+        style={{ textShadow: '0 0 5px rgba(0, 0, 0, 0.15)' }}
         title={p.type}
       >
         {PIECE_DATA[p.type].symbol[p.color]}
@@ -32,22 +32,15 @@ const CapturedPieces: React.FC<{ pieces: Piece[] }> = ({ pieces }) => (
   </div>
 );
 
-const PlayerInfo: React.FC<{ player: PlayerState; timer: number; isCurrent: boolean; isThinking?: boolean }> = ({ player, timer, isCurrent, isThinking }) => {
+const PlayerInfo: React.FC<{ player: PlayerState; timer: number; isCurrent: boolean; isThinking?: boolean; inCheck?: boolean }> = ({ player, timer, isCurrent, isThinking, inCheck }) => {
     let containerClasses = 'p-4 rounded-lg transition-all duration-300 border-2 ';
-    let turnIndicator = null;
+    const avatarBorderColor = player.color === 'white' ? 'border-orange-400' : 'border-purple-600';
 
     if (isCurrent) {
         if (player.color === 'white') {
             containerClasses += 'bg-orange-900/50 border-orange-400 animate-active-player-glow-white';
-            turnIndicator = <div className="my-2 text-lg text-center font-bold text-orange-300 animate-pulse h-7 flex items-center justify-center">YOUR TURN</div>;
         } else {
-            containerClasses += 'bg-purple-800/50 border-purple-400 animate-active-player-glow-black';
-            turnIndicator = (
-              <div className="my-2 text-lg text-center font-bold text-purple-300 animate-pulse h-7 flex items-center justify-center">
-                <span>{isThinking ? 'Phantom is thinking' : "PHANTOM'S TURN"}</span>
-                {isThinking && <span className="animate-ellipsis"></span>}
-              </div>
-            );
+            containerClasses += 'bg-purple-800/50 border-purple-600 animate-active-player-glow-black';
         }
     } else {
         containerClasses += 'bg-gray-800/50 border-transparent';
@@ -55,13 +48,36 @@ const PlayerInfo: React.FC<{ player: PlayerState; timer: number; isCurrent: bool
 
     return (
         <div className={containerClasses}>
-            <div className="flex justify-between items-center">
-                <h3 className="text-xl font-bold truncate">{player.name}</h3>
-                <div className="text-2xl font-mono bg-black/50 px-3 py-1 rounded-md">{formatTime(timer)}</div>
+            <div className="flex justify-between items-start">
+                 <div className="flex items-center gap-3">
+                    <img 
+                        src={player.avatarUrl} 
+                        alt={`${player.name}'s avatar`} 
+                        className={`w-14 h-14 rounded-full border-2 ${avatarBorderColor} bg-gray-700 shadow-md flex-shrink-0`}
+                    />
+                    <div className="flex-grow">
+                        <div className="flex flex-col items-start">
+                           <h3 className="text-xl font-bold truncate">{player.name}</h3>
+                           <span className="mt-1 bg-yellow-600 text-white text-xs font-bold px-2 py-1 rounded-full">
+                                Lv. {player.level}
+                            </span>
+                        </div>
+                        {inCheck && (
+                            <span className="mt-1 inline-block bg-red-600 text-white text-xs font-bold px-2 py-0.5 rounded-full animate-pulse">
+                                CHECK!
+                            </span>
+                        )}
+                    </div>
+                </div>
+                <div className="text-2xl font-mono bg-black/50 px-3 py-1 rounded-md ml-2 flex-shrink-0">{formatTime(timer)}</div>
             </div>
-            {turnIndicator}
-            <div>
-                <div className="text-sm text-gray-400">Captured:</div>
+            {isCurrent && player.color === 'black' && (
+                 <div className="my-2 text-lg text-center font-bold text-purple-400 animate-pulse h-7 flex items-center justify-center">
+                    <span>{isThinking ? 'Phantom is thinking' : "PHANTOM'S TURN"}</span>
+                    {isThinking && <span className="animate-ellipsis"></span>}
+                </div>
+            )}
+            <div className="mt-2">
                 <CapturedPieces pieces={player.capturedPieces} />
             </div>
         </div>
@@ -74,8 +90,8 @@ const GameStatus: React.FC<{ status: GameState['status']; winner: GameState['win
 
     switch (status) {
         case 'check':
-            message = `Check!`;
-            break;
+            // The "CHECK!" label is now on the player card, so this global message is redundant.
+            return null;
         case 'checkmate':
             message = `Checkmate! ${winnerName} wins!`;
             break;
@@ -121,6 +137,10 @@ const GameOverModal: React.FC<{ winner: GameState['winner']; whitePlayerName: st
 const GameUI: React.FC<GameUIProps> = ({ gameState, isAiThinking, onReset, onEndGame, onPlayAgain }) => {
   const { players, timers, currentPlayer, status, gameover, winner } = gameState;
 
+  const isPlayerInCheck = (playerColor: PlayerColor) => {
+      return status === 'check' && currentPlayer === playerColor;
+  }
+
   return (
     <div className="absolute inset-0 flex flex-col md:flex-row p-4 md:p-8 pointer-events-none text-white">
       {(status === 'check' || status === 'checkmate') && <StatusEffects status={status} />}
@@ -131,6 +151,7 @@ const GameUI: React.FC<GameUIProps> = ({ gameState, isAiThinking, onReset, onEnd
             timer={timers.black} 
             isCurrent={currentPlayer === 'black'}
             isThinking={isAiThinking}
+            inCheck={isPlayerInCheck('black')}
         />
       </div>
 
@@ -145,6 +166,7 @@ const GameUI: React.FC<GameUIProps> = ({ gameState, isAiThinking, onReset, onEnd
             player={players.white} 
             timer={timers.white}
             isCurrent={currentPlayer === 'white'} 
+            inCheck={isPlayerInCheck('white')}
         />
          <div className="flex flex-col space-y-2 pointer-events-auto">
             <button onClick={onEndGame} className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">

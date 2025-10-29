@@ -82,7 +82,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ board, onMove, rotation, currentP
           style={{
             transformStyle: 'preserve-3d',
             transform: `rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)`,
-            outline: '4px solid #4a044e',
+            outline: '8px solid rgba(255, 255, 255, 0.1)',
             boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.75)',
           }}
         >
@@ -92,7 +92,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ board, onMove, rotation, currentP
               const isSelected = selectedPiece?.row === row && selectedPiece?.col === col;
               const isValidTarget = validMoves.some(m => m.row === row && m.col === col);
 
-              let bgColor = isLightSquare ? 'bg-gray-600' : 'bg-gray-800';
+              let bgColor = isLightSquare ? 'bg-white/[0.65]' : 'bg-gray-900/[0.65]';
               let overlayClass = '';
 
               if (isSelected) {

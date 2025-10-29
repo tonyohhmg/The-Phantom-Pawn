@@ -1,5 +1,12 @@
 import { Board, Piece, PieceType } from './types';
 
+export const generateAvatarUrl = (seed: string): string => {
+    // Robohash's "set2" provides monster-like avatars that fit the spooky theme.
+    // The seed ensures the same name gets the same avatar, with a fallback for empty seeds.
+    const sanitizedSeed = encodeURIComponent(seed) || 'spooky-ghost';
+    return `https://robohash.org/${sanitizedSeed}?set=set2`;
+};
+
 export const INITIAL_BOARD_SETUP: Board = [
   // Black pieces (top rows)
   [
@@ -74,3 +81,6 @@ export const AI_NAMES = [
 ];
 
 export const GAME_TIMER_SECONDS = 300; // 5 minutes per player
+
+// Wins required for each level. Index 0 is Level 1, requiring 0 wins.
+export const LEVEL_THRESHOLDS = [0, 3, 7, 12, 18, 25, 35, 50, 75, 100];

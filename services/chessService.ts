@@ -1,4 +1,5 @@
 
+
 import { Board, Piece, PlayerColor, Position, Square } from '../types';
 
 export const FEN_PIECE_MAP: { [key in Piece['type']]: string } = {
@@ -214,4 +215,68 @@ export const getRandomMove = (board: Board, color: PlayerColor): { from: Positio
     }
     const randomIndex = Math.floor(Math.random() * allMoves.length);
     return allMoves[randomIndex];
+};
+
+export const isInsufficientMaterial = (board: Board): boolean => {
+    const pieceCounts = {
+        white: { p: 0, n: 0, b: 0, r: 0, q: 0, total: 0 },
+        black: { p: 0, n: 0, b: 0, r: 0, q: 0, total: 0 }
+    };
+
+    const bishops = {
+        white: [] as Position[],
+        black: [] as Position[],
+    };
+    
+    for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+            const piece = board[r][c];
+            if (piece) {
+                const color = piece.color;
+                pieceCounts[color].total++;
+                switch (piece.type) {
+                    case 'pawn': pieceCounts[color].p++; break;
+                    case 'knight': pieceCounts[color].n++; break;
+                    case 'rook': pieceCounts[color].r++; break;
+                    case 'queen': pieceCounts[color].q++; break;
+                    case 'bishop': 
+                        pieceCounts[color].b++;
+                        bishops[color].push({row: r, col: c});
+                        break;
+                }
+            }
+        }
+    }
+    
+    // If any player has a pawn, rook, or queen, checkmate is generally possible.
+    if (pieceCounts.white.p > 0 || pieceCounts.black.p > 0 || pieceCounts.white.r > 0 || pieceCounts.black.r > 0 || pieceCounts.white.q > 0 || pieceCounts.black.q > 0) {
+        return false;
+    }
+
+    // Now, only kings, knights, and bishops are on the board.
+
+    // K vs K
+    if (pieceCounts.white.total === 1 && pieceCounts.black.total === 1) return true;
+
+    // K+N vs K
+    if (pieceCounts.white.total === 2 && pieceCounts.white.n === 1 && pieceCounts.black.total === 1) return true;
+    if (pieceCounts.black.total === 2 && pieceCounts.black.n === 1 && pieceCounts.white.total === 1) return true;
+
+    // K+B vs K
+    if (pieceCounts.white.total === 2 && pieceCounts.white.b === 1 && pieceCounts.black.total === 1) return true;
+    if (pieceCounts.black.total === 2 && pieceCounts.black.b === 1 && pieceCounts.white.total === 1) return true;
+    
+    // K+B vs K+B, with bishops on same color squares.
+    if (pieceCounts.white.total === 2 && pieceCounts.white.b === 1 && pieceCounts.black.total === 2 && pieceCounts.black.b === 1) {
+        const whiteBishopPos = bishops.white[0];
+        const blackBishopPos = bishops.black[0];
+        const whiteBishopSquareColor = (whiteBishopPos.row + whiteBishopPos.col) % 2;
+        const blackBishopSquareColor = (blackBishopPos.row + blackBishopPos.col) % 2;
+
+        if (whiteBishopSquareColor === blackBishopSquareColor) {
+            return true;
+        }
+    }
+    
+    return false;
 };

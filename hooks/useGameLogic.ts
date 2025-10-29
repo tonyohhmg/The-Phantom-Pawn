@@ -1,17 +1,31 @@
 import { useState, useEffect, useCallback } from 'react';
-import { GameState, Position, PieceType, PlayerColor } from '../types';
-import { INITIAL_BOARD_SETUP, AI_NAMES, GAME_TIMER_SECONDS } from '../constants';
-import { movePiece, checkPromotion, getRandomMove, getAllLegalMoves, isKingInCheck } from '../services/chessService';
+import { GameState, Position, PieceType, PlayerColor, PlayerProfile } from '../types';
+import { INITIAL_BOARD_SETUP, AI_NAMES, GAME_TIMER_SECONDS, generateAvatarUrl } from '../constants';
+import { movePiece, checkPromotion, getRandomMove, getAllLegalMoves, isKingInCheck, isInsufficientMaterial } from '../services/chessService';
 
-const createInitialGameState = (playerName: string): GameState => {
+const createInitialGameState = (playerProfile: PlayerProfile): GameState => {
     const aiName = AI_NAMES[Math.floor(Math.random() * AI_NAMES.length)];
+    const aiLevel = Math.max(1, Math.floor(playerProfile.level - 2 + Math.random() * 5)); // AI level is around player's level
+
     return {
         board: JSON.parse(JSON.stringify(INITIAL_BOARD_SETUP)), // Deep copy
         currentPlayer: 'white',
         movesRemaining: 50,
         players: {
-            white: { name: playerName, color: 'white', capturedPieces: [] },
-            black: { name: aiName, color: 'black', capturedPieces: [] },
+            white: { 
+                name: playerProfile.name, 
+                color: 'white', 
+                capturedPieces: [], 
+                level: playerProfile.level,
+                avatarUrl: playerProfile.avatarUrl,
+            },
+            black: { 
+                name: aiName, 
+                color: 'black', 
+                capturedPieces: [], 
+                level: aiLevel,
+                avatarUrl: generateAvatarUrl(aiName),
+            },
         },
         status: 'playing',
         gameover: false,
@@ -25,13 +39,13 @@ const createInitialGameState = (playerName: string): GameState => {
     };
 };
 
-export const useGameLogic = (playerName: string) => {
-    const [gameState, setGameState] = useState<GameState>(createInitialGameState(playerName));
+export const useGameLogic = (playerProfile: PlayerProfile) => {
+    const [gameState, setGameState] = useState<GameState>(createInitialGameState(playerProfile));
     const [isAiThinking, setIsAiThinking] = useState(false);
     const [aiMoveError, setAiMoveError] = useState<string | null>(null);
 
-    const resetGame = useCallback((name: string) => {
-        setGameState(createInitialGameState(name));
+    const resetGame = useCallback((profile: PlayerProfile) => {
+        setGameState(createInitialGameState(profile));
         setAiMoveError(null);
     }, []);
 
@@ -72,6 +86,7 @@ export const useGameLogic = (playerName: string) => {
         setGameState(prev => {
             if (prev.gameover || prev.status === 'promotion') return prev;
             
+            const movedPiece = prev.board[from.row][from.col];
             const { newBoard, capturedPiece } = movePiece(prev.board, from, to);
             
             if (checkPromotion(newBoard, to)) {
@@ -106,9 +121,20 @@ export const useGameLogic = (playerName: string) => {
                 } else {
                     newStatus = 'draw';
                 }
+            } else if (isInsufficientMaterial(newBoard)) {
+                newStatus = 'draw';
+                newGameover = true;
             }
 
-            const newMovesRemaining = prev.currentPlayer === 'black' ? prev.movesRemaining - 1 : prev.movesRemaining;
+            // Correctly implement the 50-move rule: reset on pawn move or capture.
+            let newMovesRemaining;
+            if ((movedPiece && movedPiece.type === 'pawn') || capturedPiece) {
+                newMovesRemaining = 50; // Reset counter
+            } else {
+                // Decrement only on black's move to count one full move cycle
+                newMovesRemaining = prev.currentPlayer === 'black' ? prev.movesRemaining - 1 : prev.movesRemaining;
+            }
+
             if (!newGameover && newMovesRemaining <= 0) {
                 newStatus = 'draw';
                 newGameover = true;
@@ -158,9 +184,13 @@ export const useGameLogic = (playerName: string) => {
                 } else {
                     newStatus = 'draw';
                 }
+            } else if (isInsufficientMaterial(newBoard)) {
+                newStatus = 'draw';
+                newGameover = true;
             }
 
-            const newMovesRemaining = prev.currentPlayer === 'black' ? prev.movesRemaining - 1 : prev.movesRemaining;
+            // A promotion is a pawn move, which always resets the 50-move rule counter.
+            const newMovesRemaining = 50;
             if (!newGameover && newMovesRemaining <= 0) {
                 newStatus = 'draw';
                 newGameover = true;

@@ -1,5 +1,5 @@
 // Fix: Implemented the full content of the App component to structure and render the application.
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import GameBoard from './components/GameBoard';
 import GameUI from './components/GameUI';
 import StartMenu from './components/StartMenu';
@@ -8,20 +8,26 @@ import Modal from './components/Modal';
 import PromotionChoice from './components/PromotionChoice';
 import NameEntryModal from './components/NameEntryModal';
 import { useGameLogic } from './hooks/useGameLogic';
-import { Position } from './types';
+import { PlayerProfile, Position } from './types';
+import { getProfile, saveProfile } from './services/playerProfileService';
 
 type View = 'start' | 'game' | 'leaderboard';
 
 const App: React.FC = () => {
   const [view, setView] = useState<View>('start');
-  const [playerName, setPlayerName] = useState('Player');
-  const { gameState, isAiThinking, aiMoveError, handleMove, resetGame, handlePromotion } = useGameLogic(playerName);
+  const [playerProfile, setPlayerProfile] = useState<PlayerProfile>(getProfile());
+  const [modalProfileData, setModalProfileData] = useState<PlayerProfile>(playerProfile);
+  const { gameState, isAiThinking, aiMoveError, handleMove, resetGame, handlePromotion } = useGameLogic(playerProfile);
 
   const [rotation] = useState({ x: 0, y: 0 });
   const [isRulesModalOpen, setIsRulesModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
-  const [isNameEntryOpen, setIsNameEntryOpen] = useState(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [captureEffectToDisplay, setCaptureEffectToDisplay] = useState<{ position: Position; key: number } | null>(null);
+
+  useEffect(() => {
+    setModalProfileData(playerProfile);
+  }, [playerProfile]);
 
   useEffect(() => {
     if (gameState.lastCapturePosition) {
@@ -29,14 +35,46 @@ const App: React.FC = () => {
     }
   }, [gameState.lastCapturePosition]);
 
-  const handleStartGameRequest = () => {
-    setIsNameEntryOpen(true);
+  const handlePlayerWin = useCallback(() => {
+    setPlayerProfile(prevProfile => {
+        const newProfile = { ...prevProfile, wins: prevProfile.wins + 1 };
+        saveProfile(newProfile);
+        return newProfile;
+    });
+  }, []);
+
+  const handlePlayerDraw = useCallback(() => {
+    setPlayerProfile(prevProfile => {
+        const newProfile = { ...prevProfile, draws: (prevProfile.draws || 0) + 1 };
+        saveProfile(newProfile);
+        return newProfile;
+    });
+  }, []);
+
+  useEffect(() => {
+    if (gameState.gameover) {
+        if (gameState.winner === 'white') {
+            handlePlayerWin();
+        } else if (gameState.status === 'draw') {
+            handlePlayerDraw();
+        }
+    }
+  }, [gameState.gameover, gameState.winner, gameState.status, handlePlayerWin, handlePlayerDraw]);
+
+  const openProfileModal = () => {
+    setModalProfileData(playerProfile);
+    setIsProfileModalOpen(true);
   };
   
-  const handleNameEntryStart = (name: string) => {
-    setPlayerName(name);
-    resetGame(name);
-    setIsNameEntryOpen(false);
+  const handleProfileModalClose = () => {
+    // Always save profile on close, as avatar could have been changed
+    setPlayerProfile(modalProfileData);
+    saveProfile(modalProfileData);
+    setIsProfileModalOpen(false);
+  };
+
+  const handleStartGame = () => {
+    resetGame(playerProfile);
     setView('game');
   };
 
@@ -45,7 +83,7 @@ const App: React.FC = () => {
   };
 
   const handlePlayAgain = () => {
-    resetGame(playerName);
+    resetGame(playerProfile);
   };
   
   const renderContent = () => {
@@ -57,7 +95,7 @@ const App: React.FC = () => {
           <div className="relative w-full h-screen overflow-hidden flex items-center justify-center">
             <GameUI 
                 gameState={gameState} 
-                onReset={handleStartGameRequest} 
+                onReset={handleStartGame} 
                 onEndGame={handleEndGame}
                 onPlayAgain={handlePlayAgain}
                 isAiThinking={isAiThinking} 
@@ -82,7 +120,9 @@ const App: React.FC = () => {
       default:
         return (
           <StartMenu
-            onStartGame={handleStartGameRequest}
+            profile={playerProfile}
+            onStartGame={handleStartGame}
+            onShowProfile={openProfileModal}
             onShowLeaderboard={() => setView('leaderboard')}
             onShowRules={() => setIsRulesModalOpen(true)}
             onShowSettings={() => setIsSettingsModalOpen(true)}
@@ -92,13 +132,14 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen w-full text-white bg-gray-900">
+    <div className="min-h-screen w-full text-white">
         {renderContent()}
 
         <NameEntryModal 
-            isOpen={isNameEntryOpen}
-            onClose={() => setIsNameEntryOpen(false)}
-            onStart={handleNameEntryStart}
+            isOpen={isProfileModalOpen}
+            onClose={handleProfileModalClose}
+            profile={modalProfileData}
+            onProfileChange={setModalProfileData}
         />
         
         <Modal title="Game Rules" isOpen={isRulesModalOpen} onClose={() => setIsRulesModalOpen(false)}>

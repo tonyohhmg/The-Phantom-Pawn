@@ -1,10 +1,13 @@
 import React from 'react';
+import { PlayerProfile } from '../types';
 
 interface StartMenuProps {
+  profile: PlayerProfile;
   onStartGame: () => void;
   onShowLeaderboard: () => void;
   onShowRules: () => void;
   onShowSettings: () => void;
+  onShowProfile: () => void;
 }
 
 interface MenuButtonProps {
@@ -18,7 +21,7 @@ const MenuButton: React.FC<MenuButtonProps> = ({ onClick, children, variant = 'p
   
   const variantClasses = variant === 'primary' 
     ? "bg-orange-600 hover:bg-orange-700 border-orange-800 hover:border-orange-900"
-    : "bg-gray-500 hover:bg-gray-600 border-gray-700 hover:border-gray-800";
+    : "bg-gray-800 hover:bg-gray-700 border-gray-900 hover:border-black";
     
   return (
     <button
@@ -30,24 +33,28 @@ const MenuButton: React.FC<MenuButtonProps> = ({ onClick, children, variant = 'p
   );
 };
 
-const StartMenu: React.FC<StartMenuProps> = ({ onStartGame, onShowLeaderboard, onShowRules, onShowSettings }) => {
+const StartMenu: React.FC<StartMenuProps> = ({ profile, onStartGame, onShowLeaderboard, onShowRules, onShowSettings, onShowProfile }) => {
   return (
     <div 
       className="min-h-screen w-full flex flex-col items-center justify-center text-white p-4"
     >
-      <div className="text-center mb-12">
-        <h1 className="text-8xl font-jolly-lodger text-white drop-shadow-[0_5px_5px_rgba(0,0,0,0.8)]">
-          The Phantom Pawn
-        </h1>
-        <p className="text-xl text-white/65 mt-2 drop-shadow-[0_2px_2px_rgba(0,0,0,0.7)]">
-          A Halloween Chess Haunting
-        </p>
-      </div>
-      <div className="flex flex-col items-center space-y-5">
-        <MenuButton onClick={onStartGame} variant="primary">Start Game</MenuButton>
-        <MenuButton onClick={onShowLeaderboard} variant="secondary">Leaderboard</MenuButton>
-        <MenuButton onClick={onShowRules} variant="secondary">Rules</MenuButton>
-        <MenuButton onClick={onShowSettings} variant="secondary">Settings</MenuButton>
+      <div className="bg-white/10 backdrop-blur-sm border border-white/10 rounded-lg py-12 shadow-lg w-full max-w-2xl text-center">
+        <div className="text-center mb-8">
+          <h1 className="text-8xl font-jolly-lodger text-white drop-shadow-[0_5px_5px_rgba(0,0,0,0.8)] whitespace-nowrap">
+            The Phantom Pawn
+          </h1>
+          <p className="text-xl text-white/65 mt-2 drop-shadow-[0_2px_2px_rgba(0,0,0,0.7)]">
+            A Halloween Chess Haunting
+          </p>
+        </div>
+        <div className="flex flex-col items-center space-y-5">
+          <MenuButton onClick={onStartGame} variant="primary">Play</MenuButton>
+          <MenuButton onClick={onShowProfile} variant="secondary">Profile</MenuButton>
+          <MenuButton onClick={onShowLeaderboard} variant="secondary">Leaderboard</MenuButton>
+          {/* Fix: Corrected typo in the closing tag. */}
+          <MenuButton onClick={onShowRules} variant="secondary">Rules</MenuButton>
+          <MenuButton onClick={onShowSettings} variant="secondary">Settings</MenuButton>
+        </div>
       </div>
     </div>
   );

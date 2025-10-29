@@ -15,6 +15,8 @@ export interface PlayerState {
   name: string;
   color: PlayerColor;
   capturedPieces: Piece[];
+  level: number;
+  avatarUrl: string;
 }
 
 export interface GameState {
@@ -43,3 +45,11 @@ export type Position = {
   row: number;
   col: number;
 };
+
+export interface PlayerProfile {
+    name: string;
+    wins: number;
+    level: number;
+    avatarUrl: string;
+    draws: number;
+}

@@ -16,6 +16,15 @@
     <style>
       body {
         font-family: 'Inter', sans-serif;
+        /* Add spooky background image with a dark overlay and vignette */
+        background-image: 
+          radial-gradient(ellipse at center, transparent 65%, rgba(0,0,0,0.5) 100%),
+          linear-gradient(rgba(0, 0, 0, 0.65), rgba(0, 0, 0, 0.65)), 
+          url('https://github.com/tonyohhmg/The-Phantom-Pawn/blob/main/background.png?raw=true');
+        background-size: cover;
+        background-position: center center;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
       }
       .font-jolly-lodger {
         font-family: 'Jolly Lodger', cursive;
@@ -34,10 +43,10 @@
       /* Animation for player's pieces glowing */
       @keyframes pieceGlow {
         0%, 100% {
-          text-shadow: 0 0 10px rgba(255, 165, 0, 0.9), 0 0 15px rgba(255, 165, 0, 0.7);
+          text-shadow: 0 0 10px rgba(0, 0, 0, 0.15), 0 0 15px rgba(0, 0, 0, 0.15);
         }
         50% {
-          text-shadow: 0 0 15px rgba(255, 165, 0, 1), 0 0 25px rgba(255, 165, 0, 0.9);
+          text-shadow: 0 0 15px rgba(0, 0, 0, 0.2), 0 0 25px rgba(0, 0, 0, 0.2);
         }
       }
       .animate-piece-glow {
@@ -99,8 +108,8 @@
       }
 
       @keyframes activePlayerGlowBlack {
-        0%, 100% { box-shadow: 0 0 15px #a855f7, 0 0 20px #a855f7; border-color: #c084fc; }
-        50% { box-shadow: 0 0 25px #d8b4fe, 0 0 35px #d8b4fe; border-color: #e9d5ff; }
+        0%, 100% { box-shadow: 0 0 15px #9333ea, 0 0 20px #9333ea; border-color: #a855f7; }
+        50% { box-shadow: 0 0 25px #a855f7, 0 0 35px #a855f7; border-color: #c084fc; }
       }
       .animate-active-player-glow-black {
         animation: activePlayerGlowBlack 2s ease-in-out infinite;
@@ -130,7 +139,7 @@
 }
 </script>
 </head>
-<body class="bg-gray-900">
+<body>
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
 </body>

@@ -12,8 +12,8 @@ const ChessPiece: React.FC<ChessPieceProps> = ({ piece }) => {
   const isPlayerPiece = piece.color === 'white';
 
   const glowClass = isPlayerPiece ? 'animate-piece-glow' : '';
-  const textColorClass = isPlayerPiece ? 'text-orange-400' : 'text-purple-400';
-  const textShadowStyle = !isPlayerPiece ? { textShadow: '0 0 10px #a855f7, 0 0 15px #a855f7' } : {};
+  const textColorClass = isPlayerPiece ? 'text-orange-400' : 'text-purple-600';
+  const textShadowStyle = !isPlayerPiece ? { textShadow: '0 0 10px rgba(0, 0, 0, 0.15), 0 0 15px rgba(0, 0, 0, 0.15)' } : {};
 
   return (
     <div
