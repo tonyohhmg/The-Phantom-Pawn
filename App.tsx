@@ -8,6 +8,7 @@ import Modal from './components/Modal';
 import PromotionChoice from './components/PromotionChoice';
 import NameEntryModal from './components/NameEntryModal';
 import { useGameLogic } from './hooks/useGameLogic';
+import { Position } from './types';
 
 type View = 'start' | 'game' | 'leaderboard';
 
@@ -20,6 +21,13 @@ const App: React.FC = () => {
   const [isRulesModalOpen, setIsRulesModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isNameEntryOpen, setIsNameEntryOpen] = useState(false);
+  const [captureEffectToDisplay, setCaptureEffectToDisplay] = useState<{ position: Position; key: number } | null>(null);
+
+  useEffect(() => {
+    if (gameState.lastCapturePosition) {
+        setCaptureEffectToDisplay(gameState.lastCapturePosition);
+    }
+  }, [gameState.lastCapturePosition]);
 
   const handleStartGameRequest = () => {
     setIsNameEntryOpen(true);
@@ -39,14 +47,14 @@ const App: React.FC = () => {
   const handlePlayAgain = () => {
     resetGame(playerName);
   };
-
+  
   const renderContent = () => {
     switch (view) {
       case 'leaderboard':
         return <Leaderboard onBack={() => setView('start')} />;
       case 'game':
         return (
-          <div className="relative w-full h-screen overflow-hidden flex items-center justify-center bg-gray-900">
+          <div className="relative w-full h-screen overflow-hidden flex items-center justify-center">
             <GameUI 
                 gameState={gameState} 
                 onReset={handleStartGameRequest} 
@@ -60,6 +68,7 @@ const App: React.FC = () => {
               rotation={rotation}
               currentPlayer={gameState.currentPlayer}
               disabled={gameState.currentPlayer === 'black' || gameState.gameover || !!gameState.promotionPending}
+              captureEffect={captureEffectToDisplay}
             />
             {gameState.promotionPending && (
                 <PromotionChoice
@@ -67,7 +76,6 @@ const App: React.FC = () => {
                     onPromote={handlePromotion}
                 />
             )}
-            {/* GameOverModal removed from here */}
           </div>
         );
       case 'start':
@@ -84,7 +92,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <>
+    <div className="min-h-screen w-full text-white bg-gray-900">
         {renderContent()}
 
         <NameEntryModal 
@@ -93,7 +101,6 @@ const App: React.FC = () => {
             onStart={handleNameEntryStart}
         />
         
-        {/* Fix: Corrected the game rules to be accurate. */}
         <Modal title="Game Rules" isOpen={isRulesModalOpen} onClose={() => setIsRulesModalOpen(false)}>
             <div className="space-y-4 text-gray-300">
                 <p><strong>Objective:</strong> Checkmate the opponent's King (🎃).</p>
@@ -109,7 +116,7 @@ const App: React.FC = () => {
         <Modal title="Settings" isOpen={isSettingsModalOpen} onClose={() => setIsSettingsModalOpen(false)}>
             <p className="text-gray-300">Settings are not yet implemented. Stay tuned for spooky updates!</p>
         </Modal>
-    </>
+    </div>
   );
 };
 

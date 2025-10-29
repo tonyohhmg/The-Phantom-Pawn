@@ -1,5 +1,5 @@
 {
-  "name": "haunted-chess-3d",
+  "name": "the-phantom-pawn",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -9,9 +9,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@google/genai": "^1.27.0",
+    "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "react": "^19.2.0"
+    "@google/genai": "^1.27.0"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",

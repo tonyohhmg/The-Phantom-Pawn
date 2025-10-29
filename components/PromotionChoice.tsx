@@ -1,6 +1,6 @@
 import React from 'react';
 import { PieceType, PlayerColor } from '../types';
-import { PIECE_SYMBOLS } from '../constants';
+import { PIECE_DATA } from '../constants';
 
 interface PromotionChoiceProps {
   color: PlayerColor;
@@ -11,20 +11,31 @@ const promotionPieces: PieceType[] = ['queen', 'rook', 'bishop', 'knight'];
 
 const PromotionChoice: React.FC<PromotionChoiceProps> = ({ color, onPromote }) => {
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
-      <div className="bg-gray-800 p-6 rounded-lg shadow-lg border-2 border-orange-400 flex flex-col items-center animate-fade-in">
-        <h3 className="text-2xl font-bold text-white mb-4 font-creepster tracking-wider">Promote Pawn</h3>
-        <div className="flex gap-4">
-          {promotionPieces.map(pieceType => (
-            <button
-              key={pieceType}
-              onClick={() => onPromote(pieceType)}
-              className="w-20 h-20 bg-gray-700 rounded-md flex items-center justify-center text-5xl hover:bg-orange-600 transition-colors transform hover:scale-110"
-              title={`Promote to ${pieceType}`}
-            >
-              {PIECE_SYMBOLS[pieceType].symbol}
-            </button>
-          ))}
+    <div className="absolute inset-0 bg-black bg-opacity-70 flex items-center justify-center z-30">
+      <div className="bg-gray-800 p-6 rounded-lg shadow-2xl border-2 border-purple-500 flex flex-col items-center">
+        <h3 className="text-2xl font-bold text-white mb-4">Promote Pawn</h3>
+        <div className="flex space-x-4">
+          {promotionPieces.map((pieceType) => {
+            const isPlayerPiece = color === 'white';
+            const glowClass = isPlayerPiece ? 'animate-piece-glow' : '';
+            const textColorClass = isPlayerPiece ? 'text-orange-400' : 'text-purple-400';
+            const textShadowStyle = !isPlayerPiece ? { textShadow: '0 0 10px #a855f7, 0 0 15px #a855f7' } : {};
+            
+            return (
+              <button
+                key={pieceType}
+                onClick={() => onPromote(pieceType)}
+                className="p-2 w-20 h-20 bg-gray-700 rounded-md hover:bg-purple-600 transition-colors flex items-center justify-center"
+              >
+                <span
+                  className={`text-6xl ${textColorClass} ${glowClass}`}
+                  style={textShadowStyle}
+                >
+                  {PIECE_DATA[pieceType].symbol[color]}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </div>
     </div>

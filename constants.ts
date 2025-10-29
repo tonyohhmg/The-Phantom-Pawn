@@ -1,4 +1,3 @@
-// Fix: Added 'PieceType' to the import from './types'.
 import { Board, Piece, PieceType } from './types';
 
 export const INITIAL_BOARD_SETUP: Board = [
@@ -21,13 +20,31 @@ export const INITIAL_BOARD_SETUP: Board = [
   ],
 ];
 
-export const PIECE_SYMBOLS: Record<PieceType, { symbol: string; label: string }> = {
-    king: { symbol: '🎃', label: 'K' },
-    queen: { symbol: '👻', label: 'Q' },
-    rook: { symbol: '🏰', label: 'R' },
-    bishop: { symbol: '🧙', label: 'B' },
-    knight: { symbol: '🦇', label: 'N' },
-    pawn: { symbol: '💀', label: 'P' },
+export const PIECE_DATA: Record<PieceType, { label: string; symbol: { white: string; black: string } }> = {
+    king: { 
+        label: 'K', 
+        symbol: { white: '♔', black: '♚' } 
+    },
+    queen: { 
+        label: 'Q', 
+        symbol: { white: '♕', black: '♛' } 
+    },
+    rook: { 
+        label: 'R', 
+        symbol: { white: '♖', black: '♜' } 
+    },
+    bishop: { 
+        label: 'B', 
+        symbol: { white: '♗', black: '♝' } 
+    },
+    knight: { 
+        label: 'N', 
+        symbol: { white: '♘', black: '♞' } 
+    },
+    pawn: { 
+        label: 'P', 
+        symbol: { white: '♙', black: '♟' } 
+    },
 };
 
 export const LEADERBOARD_DATA = [

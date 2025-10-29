@@ -21,6 +21,7 @@ const createInitialGameState = (playerName: string): GameState => {
             white: GAME_TIMER_SECONDS,
             black: GAME_TIMER_SECONDS,
         },
+        lastCapturePosition: null,
     };
 };
 
@@ -40,13 +41,17 @@ export const useGameLogic = (playerName: string) => {
             return;
         }
 
-        const timerId = setInterval(() => {
+        const timerId = setTimeout(() => {
             setGameState(prev => {
+                // Defensive check in case game state changed while timeout was pending
+                if (prev.gameover || prev.status === 'promotion') {
+                    return prev;
+                }
+                
                 const newTimers = { ...prev.timers };
                 newTimers[prev.currentPlayer] -= 1;
 
                 if (newTimers[prev.currentPlayer] <= 0) {
-                    clearInterval(timerId);
                     return {
                         ...prev,
                         timers: newTimers,
@@ -60,8 +65,8 @@ export const useGameLogic = (playerName: string) => {
             });
         }, 1000);
 
-        return () => clearInterval(timerId);
-    }, [gameState.currentPlayer, gameState.gameover, gameState.status]);
+        return () => clearTimeout(timerId);
+    }, [gameState]);
 
     const handleMove = useCallback((from: Position, to: Position) => {
         setGameState(prev => {
@@ -75,6 +80,7 @@ export const useGameLogic = (playerName: string) => {
                     board: newBoard,
                     status: 'promotion',
                     promotionPending: { position: to, color: prev.currentPlayer },
+                    lastCapturePosition: capturedPiece ? { position: to, key: Date.now() } : null,
                 }
             }
             
@@ -118,6 +124,7 @@ export const useGameLogic = (playerName: string) => {
                 gameover: newGameover,
                 winner: newWinner,
                 promotionPending: null,
+                lastCapturePosition: capturedPiece ? { position: to, key: Date.now() } : null,
             };
         });
     }, []);
@@ -168,6 +175,7 @@ export const useGameLogic = (playerName: string) => {
                 gameover: newGameover,
                 winner: newWinner,
                 promotionPending: null,
+                lastCapturePosition: null, // No capture on promotion
             };
         });
     }, []);
@@ -191,7 +199,7 @@ export const useGameLogic = (playerName: string) => {
                     }));
                 }
                 setIsAiThinking(false);
-            }, 1000);
+            }, Math.random() * 1000 + 1500);
 
             return () => clearTimeout(timeoutId);
         }

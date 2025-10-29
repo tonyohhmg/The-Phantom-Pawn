@@ -36,6 +36,7 @@ export interface GameState {
     white: number;
     black: number;
   };
+  lastCapturePosition: { position: Position, key: number } | null;
 }
 
 export type Position = {
