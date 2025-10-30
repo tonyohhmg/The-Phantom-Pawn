@@ -7,7 +7,7 @@ const getLevelForWins = (wins: number): number => {
   // Find the highest level the player has achieved
   for (let i = LEVEL_THRESHOLDS.length - 1; i >= 0; i--) {
     if (wins >= LEVEL_THRESHOLDS[i]) {
-      return i + 1; // Levels are 1-based
+      return i + 2; // Levels are 1-based, and array is 0-indexed for level 2+
     }
   }
   return 1;
@@ -45,7 +45,7 @@ export const getProfile = (): PlayerProfile => {
   };
 };
 
-export const saveProfile = (profile: PlayerProfile): void => {
+export const saveProfile = (profile: PlayerProfile): PlayerProfile => {
   try {
     // Recalculate level before saving to ensure consistency
     const profileToSave: PlayerProfile = {
@@ -61,7 +61,9 @@ export const saveProfile = (profile: PlayerProfile): void => {
         profileToSave.draws = 0;
     }
     localStorage.setItem(PROFILE_KEY, JSON.stringify(profileToSave));
+    return profileToSave;
   } catch (error) {
     console.error("Failed to save player profile:", error);
+    return profile;
   }
 };

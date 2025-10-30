@@ -12,12 +12,12 @@ const ChessPiece: React.FC<ChessPieceProps> = ({ piece }) => {
   const isPlayerPiece = piece.color === 'white';
 
   const glowClass = isPlayerPiece ? 'animate-piece-glow' : '';
-  const textColorClass = isPlayerPiece ? 'text-orange-400' : 'text-purple-600';
+  const textColorClass = isPlayerPiece ? 'text-orange-500' : 'text-purple-600';
   const textShadowStyle = !isPlayerPiece ? { textShadow: '0 0 10px rgba(0, 0, 0, 0.15), 0 0 15px rgba(0, 0, 0, 0.15)' } : {};
 
   return (
     <div
-      className={`w-full h-full flex items-center justify-center cursor-pointer text-5xl md:text-6xl lg:text-7xl transition-transform hover:scale-110 ${textColorClass} ${glowClass}`}
+      className={`w-full h-full flex items-center justify-center text-5xl md:text-6xl lg:text-7xl ${textColorClass} ${glowClass}`}
       style={textShadowStyle}
     >
       {pieceSymbol}

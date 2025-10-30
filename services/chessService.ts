@@ -1,6 +1,6 @@
 
 
-import { Board, Piece, PlayerColor, Position, Square } from '../types';
+import { Board, Piece, PlayerColor, Position, PowerUpType, Square } from '../types';
 
 export const FEN_PIECE_MAP: { [key in Piece['type']]: string } = {
   pawn: 'p',
@@ -46,21 +46,29 @@ export const boardToFEN = (board: Board, currentPlayer: PlayerColor): string => 
 
 const isOutOfBounds = (row: number, col: number) => row < 0 || row >= 8 || col < 0 || col >= 8;
 
-const isPathClear = (board: Board, from: Position, to: Position, rowStep: number, colStep: number): boolean => {
+const isPathClear = (board: Board, from: Position, to: Position, rowStep: number, colStep: number, spectralMoveActive: boolean): boolean => {
     let currentRow = from.row + rowStep;
     let currentCol = from.col + colStep;
+    let piecesInPath = 0;
     while (currentRow !== to.row || currentCol !== to.col) {
         if (board[currentRow][currentCol] !== null) {
-            return false;
+            piecesInPath++;
         }
         currentRow += rowStep;
         currentCol += colStep;
     }
-    return true;
+    
+    if (spectralMoveActive) {
+        // With spectral move, the path can have at most one piece to pass through.
+        return piecesInPath <= 1;
+    } else {
+        // For a normal move, the path must be completely clear.
+        return piecesInPath === 0;
+    }
 };
 
 // This function checks for pseudo-legal moves (ignores checks)
-const isValidMovePattern = (board: Board, from: Position, to: Position): boolean => {
+const isValidMovePattern = (board: Board, from: Position, to: Position, activePowerUp: PowerUpType | null): boolean => {
   if (isOutOfBounds(to.row, to.col)) return false;
 
   const piece = board[from.row][from.col];
@@ -68,10 +76,12 @@ const isValidMovePattern = (board: Board, from: Position, to: Position): boolean
 
   if (!piece) return false;
   if (from.row === to.row && from.col === to.col) return false;
+  
   if (targetPiece && targetPiece.color === piece.color) return false;
 
   const dRow = to.row - from.row;
   const dCol = to.col - from.col;
+  const isSpectralMove = activePowerUp === 'spectralMove' && ['queen', 'rook', 'bishop'].includes(piece.type);
 
   switch (piece.type) {
     case 'pawn':
@@ -99,7 +109,7 @@ const isValidMovePattern = (board: Board, from: Position, to: Position): boolean
       if (dRow !== 0 && dCol !== 0) return false;
       const rowStepRook = dRow === 0 ? 0 : dRow > 0 ? 1 : -1;
       const colStepRook = dCol === 0 ? 0 : dCol > 0 ? 1 : -1;
-      return isPathClear(board, from, to, rowStepRook, colStepRook);
+      return isPathClear(board, from, to, rowStepRook, colStepRook, isSpectralMove);
 
     case 'knight':
       return (Math.abs(dRow) === 2 && Math.abs(dCol) === 1) || (Math.abs(dRow) === 1 && Math.abs(dCol) === 2);
@@ -108,13 +118,13 @@ const isValidMovePattern = (board: Board, from: Position, to: Position): boolean
       if (Math.abs(dRow) !== Math.abs(dCol)) return false;
       const rowStepBishop = dRow > 0 ? 1 : -1;
       const colStepBishop = dCol > 0 ? 1 : -1;
-      return isPathClear(board, from, to, rowStepBishop, colStepBishop);
+      return isPathClear(board, from, to, rowStepBishop, colStepBishop, isSpectralMove);
       
     case 'queen':
       if ((dRow !== 0 && dCol !== 0) && (Math.abs(dRow) !== Math.abs(dCol))) return false;
       const rowStepQueen = dRow === 0 ? 0 : dRow > 0 ? 1 : -1;
       const colStepQueen = dCol === 0 ? 0 : dCol > 0 ? 1 : -1;
-      return isPathClear(board, from, to, rowStepQueen, colStepQueen);
+      return isPathClear(board, from, to, rowStepQueen, colStepQueen, isSpectralMove);
 
     case 'king':
       return Math.abs(dRow) <= 1 && Math.abs(dCol) <= 1;
@@ -164,7 +174,7 @@ export const isKingInCheck = (board: Board, kingColor: PlayerColor): boolean => 
         for (let c = 0; c < 8; c++) {
             const piece = board[r][c];
             if (piece && piece.color === opponentColor) {
-                if (isValidMovePattern(board, { row: r, col: c }, kingPos)) {
+                if (isValidMovePattern(board, { row: r, col: c }, kingPos, null)) {
                     return true;
                 }
             }
@@ -174,12 +184,19 @@ export const isKingInCheck = (board: Board, kingColor: PlayerColor): boolean => 
     return false;
 };
 
-export const isLegalMove = (board: Board, from: Position, to: Position): boolean => {
+export const isLegalMove = (board: Board, from: Position, to: Position, activePowerUp: PowerUpType | null): boolean => {
     const piece = board[from.row][from.col];
     if (!piece) return false;
 
+    // A king can never be captured. This is checked here instead of isValidMovePattern
+    // to allow threat detection (isKingInCheck) to work correctly.
+    const targetPiece = board[to.row][to.col];
+    if (targetPiece && targetPiece.type === 'king') {
+        return false;
+    }
+
     // Check if the move pattern is valid first
-    if (!isValidMovePattern(board, from, to)) {
+    if (!isValidMovePattern(board, from, to, activePowerUp)) {
         return false;
     }
 
@@ -188,8 +205,28 @@ export const isLegalMove = (board: Board, from: Position, to: Position): boolean
     return !isKingInCheck(newBoard, piece.color);
 };
 
+export const isLegalPossessionMove = (board: Board, from: Position, to: Position): boolean => {
+    const piece = board[from.row][from.col];
+    const targetPiece = board[to.row][to.col];
 
-export const getAllLegalMoves = (board: Board, color: PlayerColor): { from: Position; to: Position }[] => {
+    if (!piece || (piece.type !== 'pawn' && piece.type !== 'knight')) return false;
+    if (targetPiece) return false; // Cannot capture
+
+    // Re-use isValidMovePattern, but ensure no capture for pawns
+    if (piece.type === 'pawn') {
+        const dCol = to.col - from.col;
+        if (Math.abs(dCol) === 1) return false; // Pawn captures are diagonal
+    }
+    
+    // For both pawns (forward) and knights, their normal "move" pattern is non-capturing
+    // isValidMovePattern checks for targetPiece being null for pawn forward moves.
+    // Knights can jump, so path is not an issue.
+    // The only rule is that the destination square must be empty.
+    return isValidMovePattern(board, from, to, null);
+};
+
+
+export const getAllLegalMoves = (board: Board, color: PlayerColor, activePowerUp: PowerUpType | null): { from: Position; to: Position }[] => {
   const moves: { from: Position; to: Position }[] = [];
   for (let rFrom = 0; rFrom < 8; rFrom++) {
     for (let cFrom = 0; cFrom < 8; cFrom++) {
@@ -197,7 +234,7 @@ export const getAllLegalMoves = (board: Board, color: PlayerColor): { from: Posi
       if (piece && piece.color === color) {
         for (let rTo = 0; rTo < 8; rTo++) {
           for (let cTo = 0; cTo < 8; cTo++) {
-            if (isLegalMove(board, { row: rFrom, col: cFrom }, { row: rTo, col: cTo })) {
+            if (isLegalMove(board, { row: rFrom, col: cFrom }, { row: rTo, col: cTo }, activePowerUp)) {
               moves.push({ from: { row: rFrom, col: cFrom }, to: { row: rTo, col: cTo } });
             }
           }
@@ -208,8 +245,44 @@ export const getAllLegalMoves = (board: Board, color: PlayerColor): { from: Posi
   return moves;
 };
 
+export const getEtherealEscapeMoves = (board: Board, kingColor: PlayerColor): Position[] => {
+    const validMoves: Position[] = [];
+    let kingPos: Position | null = null;
+    for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+            if (board[r][c]?.type === 'king' && board[r][c]?.color === kingColor) {
+                kingPos = { row: r, col: c };
+                break;
+            }
+        }
+    }
+
+    if (!kingPos) return [];
+
+    for (let dRow = -1; dRow <= 1; dRow++) {
+        for (let dCol = -1; dCol <= 1; dCol++) {
+            if (dRow === 0 && dCol === 0) continue;
+            
+            const toPos = { row: kingPos.row + dRow, col: kingPos.col + dCol };
+            
+            if (isOutOfBounds(toPos.row, toPos.col)) continue;
+            
+            const targetSquare = board[toPos.row][toPos.col];
+            if (targetSquare && targetSquare.color === kingColor) continue; // Can't move onto own piece
+
+            // Simulate the move and check for check
+            const { newBoard } = movePiece(board, kingPos, toPos);
+            if (!isKingInCheck(newBoard, kingColor)) {
+                validMoves.push(toPos);
+            }
+        }
+    }
+
+    return validMoves;
+};
+
 export const getRandomMove = (board: Board, color: PlayerColor): { from: Position; to: Position } | null => {
-    const allMoves = getAllLegalMoves(board, color);
+    const allMoves = getAllLegalMoves(board, color, null); // AI won't use spectral move for now
     if (allMoves.length === 0) {
         return null; // No valid moves, could be checkmate or stalemate
     }

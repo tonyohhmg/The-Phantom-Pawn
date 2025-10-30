@@ -1,29 +1,56 @@
-import { Board, Piece, PieceType } from './types';
+import { Board, Piece, PieceType, PowerUpType } from './types';
+
+const simpleHash = (str: string): number => {
+  let hash = 0;
+  if (str.length === 0) return hash;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash |= 0; // Convert to 32bit integer
+  }
+  return Math.abs(hash);
+};
 
 export const generateAvatarUrl = (seed: string): string => {
-    // Robohash's "set2" provides monster-like avatars that fit the spooky theme.
-    // The seed ensures the same name gets the same avatar, with a fallback for empty seeds.
+    // bottts-neutral provides cute, ghost-like robot heads.
+    // We use a spooky color palette to generate a deterministic, ghostly avatar.
     const sanitizedSeed = encodeURIComponent(seed) || 'spooky-ghost';
-    return `https://robohash.org/${sanitizedSeed}?set=set2`;
+    const spookyColors = [
+        'd1d5db', // light gray
+        '9ca3af', // medium gray
+        '6b7280', // dark gray
+        'a855f7', // purple
+        'c084fc', // light purple
+        'f3f4f6', // off-white
+    ];
+
+    const hash = simpleHash(sanitizedSeed);
+
+    // Use the hash to deterministically select colors for a ghostly appearance
+    const primaryColor = spookyColors[((hash >> 2) % 2) + 3]; // Purples
+    const secondaryColor = spookyColors[((hash >> 4) % 3)];    // Grays
+    
+    // This style creates avatars that look like little ghosts.
+    return `https://api.dicebear.com/8.x/bottts-neutral/svg?seed=${sanitizedSeed}&primaryColor=${primaryColor}&secondaryColor=${secondaryColor}&mouthProbability=75&sidesProbability=75`;
 };
 
 export const INITIAL_BOARD_SETUP: Board = [
   // Black pieces (top rows)
   [
-    { type: 'rook', color: 'black' }, { type: 'knight', color: 'black' }, { type: 'bishop', color: 'black' }, { type: 'queen', color: 'black' }, 
-    { type: 'king', color: 'black' }, { type: 'bishop', color: 'black' }, { type: 'knight', color: 'black' }, { type: 'rook', color: 'black' }
+    { id: 'b-rook-1', type: 'rook', color: 'black' }, { id: 'b-knight-1', type: 'knight', color: 'black' }, { id: 'b-bishop-1', type: 'bishop', color: 'black' }, { id: 'b-queen', type: 'queen', color: 'black' }, 
+    { id: 'b-king', type: 'king', color: 'black' }, { id: 'b-bishop-2', type: 'bishop', color: 'black' }, { id: 'b-knight-2', type: 'knight', color: 'black' }, { id: 'b-rook-2', type: 'rook', color: 'black' }
   ],
-  Array(8).fill({ type: 'pawn', color: 'black' }),
+  Array.from({ length: 8 }, (_, i) => ({ id: `b-pawn-${i}`, type: 'pawn', color: 'black' })),
   // Empty middle rows
   Array(8).fill(null),
   Array(8).fill(null),
   Array(8).fill(null),
   Array(8).fill(null),
   // White pieces (bottom rows)
-  Array(8).fill({ type: 'pawn', color: 'white' }),
+  Array.from({ length: 8 }, (_, i) => ({ id: `w-pawn-${i}`, type: 'pawn', color: 'white' })),
   [
-    { type: 'rook', color: 'white' }, { type: 'knight', color: 'white' }, { type: 'bishop', color: 'white' }, { type: 'queen', color: 'white' }, 
-    { type: 'king', color: 'white' }, { type: 'bishop', color: 'white' }, { type: 'knight', color: 'white' }, { type: 'rook', color: 'white' }
+    { id: 'w-rook-1', type: 'rook', color: 'white' }, { id: 'w-knight-1', type: 'knight', color: 'white' }, { id: 'w-bishop-1', type: 'bishop', color: 'white' }, { id: 'w-queen', type: 'queen', color: 'white' }, 
+    { id: 'w-king', type: 'king', color: 'white' }, { id: 'w-bishop-2', type: 'bishop', color: 'white' }, { id: 'w-knight-2', type: 'knight', color: 'white' }, { id: 'w-rook-2', type: 'rook', color: 'white' }
   ],
 ];
 
@@ -48,39 +75,82 @@ export const PIECE_DATA: Record<PieceType, { label: string; symbol: { white: str
         label: 'N', 
         symbol: { white: '♘', black: '♞' } 
     },
+    // Fix: Completed the 'pawn' object definition, which was previously truncated.
     pawn: { 
         label: 'P', 
         symbol: { white: '♙', black: '♟' } 
     },
 };
 
+export const AVAILABLE_POWER_UPS: PowerUpType[] = ['spectralMove', 'timeTwist', 'ghostlyPawn', 'ghastlyPossession', 'etherealEscape', 'seance'];
+
+export const POWER_UP_DATA: Record<PowerUpType, { name: string; description: string; icon: string; }> = {
+    spectralMove: {
+        name: 'Spectral Move',
+        description: 'Your next move with a Queen, Rook, or Bishop can pass through one piece.',
+        icon: '👻',
+    },
+    timeTwist: {
+        name: 'Time Twist',
+        description: 'Instantly add 30 seconds to your timer.',
+        icon: '⏳',
+    },
+    ghostlyPawn: {
+        name: 'Ghostly Pawn',
+        description: 'Summon a new pawn on any empty square in your second rank.',
+        icon: '💀',
+    },
+    ghastlyPossession: {
+        name: 'Ghastly Possession',
+        description: "Briefly possess an opponent's Pawn or Knight, forcing it to make one legal, non-capturing move of your choice.",
+        icon: '👿',
+    },
+    etherealEscape: {
+        name: 'Ethereal Escape',
+        description: 'Instantly teleport your King out of check to any adjacent, non-threatened square, ignoring intervening pieces.',
+        icon: '💨',
+    },
+    seance: {
+        name: 'Séance',
+        description: 'Bring a piece stolen by a phantom back to an empty square on your first two ranks.',
+        icon: '🕯️',
+    }
+};
+
+
+// Fix: Added missing constants that were causing import errors in other files.
+export const AI_NAMES: string[] = [
+    'The Ghostly Grandmaster',
+    'Shadow Pawn',
+    'Count Checkmate',
+    'The Crypt Keeper',
+    'Banshee Bishop',
+    'Wraithful Rook',
+];
+
+export const GAME_TIMER_SECONDS = 10 * 60; // 10 minutes
+
+export const LEVEL_THRESHOLDS = [
+    1,   // Level 2
+    3,   // Level 3
+    6,   // Level 4
+    10,  // Level 5
+    15,  // Level 6
+    25,  // Level 7
+    40,  // Level 8
+    60,  // Level 9
+    100, // Level 10
+];
+
 export const LEADERBOARD_DATA = [
-    { rank: 1, name: 'Vlad the Impaler', score: 6660 },
-    { rank: 2, name: 'Ghastly Garry', score: 5800 },
-    { rank: 3, name: 'Morticia Addams', score: 5500 },
-    { rank: 4, name: 'Count Dracula', score: 4900 },
-    { rank: 5, name: 'Witching Wesley', score: 4200 },
-    { rank: 6, name: 'Spooky Spassky', score: 3800 },
-    { rank: 7, name: 'Phantom Fischer', score: 3500 },
-    { rank: 8, name: 'Franken-Stein', score: 3100 },
-    { rank: 9, name: 'The Mummy', score: 2800 },
-    { rank: 10, name: 'Jack Skellington', score: 2500 },
+    { rank: 1, name: 'Magnus Carlsen', score: 2882 },
+    { rank: 2, name: 'Garry Kasparov', score: 2851 },
+    { rank: 3, name: 'Fabiano Caruana', score: 2844 },
+    { rank: 4, name: 'Levon Aronian', score: 2830 },
+    { rank: 5, name: 'Wesley So', score: 2822 },
+    { rank: 6, name: 'Hikaru Nakamura', score: 2816 },
+    { rank: 7, name: 'Viswanathan Anand', score: 2811 },
+    { rank: 8, name: 'Vladimir Kramnik', score: 2809 },
+    { rank: 9, name: 'Maxime Vachier-Lagrave', score: 2804 },
+    { rank: 10, name: 'Ding Liren', score: 2801 },
 ];
-
-export const AI_NAMES = [
-    'Grave Digger',
-    'Specter',
-    'The Phantom',
-    'Warlock',
-    'Bogeyman',
-    'Headless Horseman',
-    'Count Crypt',
-    'Baron Von Bat',
-    'Lord Skele-pawn',
-    'The Bishop of Bones'
-];
-
-export const GAME_TIMER_SECONDS = 300; // 5 minutes per player
-
-// Wins required for each level. Index 0 is Level 1, requiring 0 wins.
-export const LEVEL_THRESHOLDS = [0, 3, 7, 12, 18, 25, 35, 50, 75, 100];

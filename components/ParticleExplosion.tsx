@@ -1,6 +1,6 @@
 import React from 'react';
 
-const PARTICLE_COUNT = 50;
+const PARTICLE_COUNT = 40; // Slightly fewer particles for a less dense, more wispy effect
 
 const ParticleExplosion: React.FC = () => {
   return (
@@ -8,11 +8,12 @@ const ParticleExplosion: React.FC = () => {
       {Array.from({ length: PARTICLE_COUNT }).map((_, i) => {
         const style = {
           '--angle': `${Math.random() * 360}deg`,
-          '--distance': `${Math.random() * 80 + 50}px`,
-          '--duration': `${Math.random() * 0.5 + 0.8}s`,
-          '--delay': `${Math.random() * 0.1}s`,
-          '--size': `${Math.floor(Math.random() * 8 + 6)}px`,
-          '--color': ['#f97316', '#a855f7', '#eab308'][Math.floor(Math.random() * 3)],
+          '--distance': `${Math.random() * 70 + 50}px`, // Adjusted distance for the new upward motion
+          '--duration': `${Math.random() * 0.8 + 1.2}s`, // Slower, more "floaty" duration
+          '--delay': `${Math.random() * 0.2}s`,
+          '--size': `${Math.floor(Math.random() * 12 + 10)}px`, // Larger, softer particles
+          // Ghostly colors: wispy white and ethereal lavender
+          '--color': ['rgba(255, 255, 255, 0.8)', 'rgba(221, 214, 254, 0.7)'][Math.floor(Math.random() * 2)],
         } as React.CSSProperties;
 
         return <div key={i} className="particle" style={style}></div>;

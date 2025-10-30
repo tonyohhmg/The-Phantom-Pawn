@@ -3,6 +3,7 @@ export type PieceType = 'pawn' | 'rook' | 'knight' | 'bishop' | 'queen' | 'king'
 export type PlayerColor = 'white' | 'black';
 
 export interface Piece {
+  id: string;
   type: PieceType;
   color: PlayerColor;
 }
@@ -11,12 +12,22 @@ export type Square = Piece | null;
 
 export type Board = Square[][];
 
+export type PowerUpType = 'spectralMove' | 'timeTwist' | 'ghostlyPawn' | 'ghastlyPossession' | 'etherealEscape' | 'seance';
+
+export interface PowerUp {
+    id: string;
+    type: PowerUpType;
+}
+
 export interface PlayerState {
   name: string;
   color: PlayerColor;
   capturedPieces: Piece[];
   level: number;
   avatarUrl: string;
+  powerUps: PowerUp[];
+  powerUpsUsed: PowerUpType[];
+  stolenPiece: Piece | null;
 }
 
 export interface GameState {
@@ -27,7 +38,7 @@ export interface GameState {
     white: PlayerState;
     black: PlayerState;
   };
-  status: 'playing' | 'check' | 'checkmate' | 'draw' | 'promotion' | 'timeout';
+  status: 'playing' | 'check' | 'checkmate' | 'draw' | 'promotion' | 'timeout' | 'placingPawn' | 'possessingPiece' | 'escapingCheck' | 'placingStolenPiece';
   gameover: boolean;
   winner: PlayerColor | null;
   promotionPending: {
@@ -39,6 +50,9 @@ export interface GameState {
     black: number;
   };
   lastCapturePosition: { position: Position, key: number } | null;
+  activePowerUp: PowerUpType | null;
+  moveCount: number;
+  announcement: { message: string; key: number } | null;
 }
 
 export type Position = {

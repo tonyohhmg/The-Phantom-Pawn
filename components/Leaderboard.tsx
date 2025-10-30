@@ -9,7 +9,7 @@ interface LeaderboardProps {
 const Leaderboard: React.FC<LeaderboardProps> = ({ onBack }) => {
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-center p-4">
-      <h1 className="text-6xl font-jolly-lodger text-orange-500 mb-8">World Leaderboard</h1>
+      <h1 className="text-6xl font-asimovian text-orange-500 mb-8">World Leaderboard</h1>
       <div className="w-full max-w-md bg-gray-800 rounded-lg shadow-lg border-2 border-purple-500">
         <div className="grid grid-cols-3 text-center p-3 border-b border-gray-600 font-bold text-gray-400">
           <span>Rank</span>
