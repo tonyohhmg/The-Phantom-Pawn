@@ -3,7 +3,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import GameBoard from './components/GameBoard';
 import GameUI from './components/GameUI';
 import StartMenu from './components/StartMenu';
-import Leaderboard from './components/Leaderboard';
 import Modal from './components/Modal';
 import PromotionChoice from './components/PromotionChoice';
 import NameEntryModal from './components/NameEntryModal';
@@ -13,7 +12,7 @@ import { getProfile, saveProfile } from './services/playerProfileService';
 import LoadingScreen from './components/LoadingScreen';
 import EtherealCursor from './components/EtherealCursor';
 
-type View = 'start' | 'game' | 'leaderboard';
+type View = 'start' | 'game';
 
 const App: React.FC = () => {
   const [view, setView] = useState<View>('start');
@@ -130,8 +129,6 @@ const App: React.FC = () => {
   
   const renderContent = () => {
     switch (view) {
-      case 'leaderboard':
-        return <Leaderboard onBack={navigateToStartMenu} />;
       case 'game':
         return (
           <div className="relative w-full h-screen overflow-hidden flex items-center justify-center">
@@ -143,6 +140,7 @@ const App: React.FC = () => {
                 onPlayAgain={handlePlayAgain}
                 isAiThinking={isAiThinking} 
                 onActivatePowerUp={handleActivatePowerUp}
+                aiMoveError={aiMoveError}
             />
             <GameBoard
               gameState={gameState}
@@ -170,7 +168,6 @@ const App: React.FC = () => {
             profile={playerProfile}
             onStartGame={handleStartGame}
             onShowProfile={openProfileModal}
-            onShowLeaderboard={() => setView('leaderboard')}
             onShowRules={() => setIsRulesModalOpen(true)}
             onShowSettings={() => setIsSettingsModalOpen(true)}
           />

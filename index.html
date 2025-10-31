@@ -49,10 +49,10 @@
       /* Animation for player's pieces glowing */
       @keyframes pieceGlow {
         0%, 100% {
-          text-shadow: 0 0 10px rgba(0, 0, 0, 0.15), 0 0 15px rgba(0, 0, 0, 0.15);
+          filter: drop-shadow(0 0 4px #f97316) drop-shadow(0 0 2px #fb923c);
         }
         50% {
-          text-shadow: 0 0 15px rgba(0, 0, 0, 0.2), 0 0 25px rgba(0, 0, 0, 0.2);
+          filter: drop-shadow(0 0 8px #ea580c) drop-shadow(0 0 4px #f97316);
         }
       }
       .animate-piece-glow {
@@ -173,7 +173,7 @@
     "react": "https://aistudiocdn.com/react@^19.2.0",
     "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
     "react/": "https://aistudiocdn.com/react@^19.2.0/",
-    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.27.0"
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.28.0"
   }
 }
 </script>

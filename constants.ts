@@ -57,28 +57,27 @@ export const INITIAL_BOARD_SETUP: Board = [
 export const PIECE_DATA: Record<PieceType, { label: string; symbol: { white: string; black: string } }> = {
     king: { 
         label: 'K', 
-        symbol: { white: '♔', black: '♚' } 
+        symbol: { white: 'https://anthonyorsa.com/wp-content/uploads/2025/10/King-White.png', black: 'https://anthonyorsa.com/wp-content/uploads/2025/10/King-Black.png' } 
     },
     queen: { 
         label: 'Q', 
-        symbol: { white: '♕', black: '♛' } 
+        symbol: { white: 'https://anthonyorsa.com/wp-content/uploads/2025/10/Queen-White.png', black: 'https://anthonyorsa.com/wp-content/uploads/2025/10/Queen-Black.png' } 
     },
     rook: { 
         label: 'R', 
-        symbol: { white: '♖', black: '♜' } 
+        symbol: { white: 'https://anthonyorsa.com/wp-content/uploads/2025/10/Rook-White.png', black: 'https://anthonyorsa.com/wp-content/uploads/2025/10/Rook-Black.png' } 
     },
     bishop: { 
         label: 'B', 
-        symbol: { white: '♗', black: '♝' } 
+        symbol: { white: 'https://anthonyorsa.com/wp-content/uploads/2025/10/Bishop-White.png', black: 'https://anthonyorsa.com/wp-content/uploads/2025/10/Bishop-Black.png' } 
     },
     knight: { 
         label: 'N', 
-        symbol: { white: '♘', black: '♞' } 
+        symbol: { white: 'https://anthonyorsa.com/wp-content/uploads/2025/10/Knight-White.png', black: 'https://anthonyorsa.com/wp-content/uploads/2025/10/Knight-Black.png' } 
     },
-    // Fix: Completed the 'pawn' object definition, which was previously truncated.
     pawn: { 
         label: 'P', 
-        symbol: { white: '♙', black: '♟' } 
+        symbol: { white: 'https://anthonyorsa.com/wp-content/uploads/2025/10/Pawn-White.png', black: 'https://anthonyorsa.com/wp-content/uploads/2025/10/Pawn-Black.png' } 
     },
 };
 
@@ -118,6 +117,20 @@ export const POWER_UP_DATA: Record<PowerUpType, { name: string; description: str
 };
 
 
+// Fix: Added missing LEADERBOARD_DATA to resolve import error.
+export const LEADERBOARD_DATA = [
+    { rank: 1, name: 'Spectral King', score: 10500 },
+    { rank: 2, name: 'The Poltergeist', score: 9800 },
+    { rank: 3, name: 'Wraith Walker', score: 9750 },
+    { rank: 4, name: 'Banshee Queen', score: 9200 },
+    { rank: 5, name: 'Shadow Bishop', score: 8900 },
+    { rank: 6, name: 'Phantom Knight', score: 8500 },
+    { rank: 7, name: 'Ghostly Pawn', score: 8100 },
+    { rank: 8, name: 'Spirit of the Board', score: 7600 },
+    { rank: 9, name: 'Ectoplasmic Endgame', score: 7300 },
+    { rank: 10, name: 'The Crypt Keeper', score: 7150 },
+];
+
 // Fix: Added missing constants that were causing import errors in other files.
 export const AI_NAMES: string[] = [
     'The Ghostly Grandmaster',
@@ -140,17 +153,4 @@ export const LEVEL_THRESHOLDS = [
     40,  // Level 8
     60,  // Level 9
     100, // Level 10
-];
-
-export const LEADERBOARD_DATA = [
-    { rank: 1, name: 'Magnus Carlsen', score: 2882 },
-    { rank: 2, name: 'Garry Kasparov', score: 2851 },
-    { rank: 3, name: 'Fabiano Caruana', score: 2844 },
-    { rank: 4, name: 'Levon Aronian', score: 2830 },
-    { rank: 5, name: 'Wesley So', score: 2822 },
-    { rank: 6, name: 'Hikaru Nakamura', score: 2816 },
-    { rank: 7, name: 'Viswanathan Anand', score: 2811 },
-    { rank: 8, name: 'Vladimir Kramnik', score: 2809 },
-    { rank: 9, name: 'Maxime Vachier-Lagrave', score: 2804 },
-    { rank: 10, name: 'Ding Liren', score: 2801 },
 ];

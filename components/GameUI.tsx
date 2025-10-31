@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { GameState, PlayerState, Piece, PlayerColor, PowerUp, PowerUpType } from '../types';
 import { PIECE_DATA, POWER_UP_DATA } from '../constants';
@@ -13,6 +14,7 @@ interface GameUIProps {
   onPlayAgain: () => void;
   onConfirmForfeit: () => void;
   onActivatePowerUp: (powerUp: PowerUp) => void;
+  aiMoveError: string | null;
 }
 
 const formatTime = (seconds: number): string => {
@@ -23,24 +25,35 @@ const formatTime = (seconds: number): string => {
 
 const CapturedPieces: React.FC<{ pieces: Piece[]; stolenPiece: Piece | null; color: PlayerColor }> = ({ pieces, stolenPiece, color }) => (
     <div className="flex flex-col">
-        <div className="flex flex-wrap gap-2 h-12 items-center text-2xl">
+        <div className="flex flex-wrap gap-1 h-12 items-center">
             {pieces.map((p, i) => (
-            <span
+            <img
                 key={i}
-                className={`${p.color === 'white' ? 'text-orange-500' : 'text-purple-600'}`}
-                style={{ textShadow: '0 0 5px rgba(0, 0, 0, 0.15)' }}
+                src={PIECE_DATA[p.type].symbol[p.color]}
                 title={p.type}
-            >
-                {PIECE_DATA[p.type].symbol[p.color]}
-            </span>
+                alt={p.type}
+                className="w-4 h-4 object-contain"
+                style={{
+                    filter: p.color === 'white' 
+                        ? 'drop-shadow(0 0 2px #f97316)' 
+                        : 'drop-shadow(0 0 2px #a855f7)',
+                }}
+            />
             ))}
         </div>
         {stolenPiece && (
             <div className="h-6 flex items-center text-sm text-red-400 font-bold animate-pulse">
                 Stolen:
-                <span className={`ml-2 text-2xl ${color === 'white' ? 'text-orange-500' : 'text-purple-600'}`}>
-                    {PIECE_DATA[stolenPiece.type].symbol[color]}
-                </span>
+                <img
+                    src={PIECE_DATA[stolenPiece.type].symbol[color]}
+                    alt={stolenPiece.type}
+                    className="ml-2 w-4 h-4 object-contain"
+                    style={{
+                        filter: color === 'white' 
+                            ? 'drop-shadow(0 0 2px #f97316)' 
+                            : 'drop-shadow(0 0 2px #a855f7)',
+                    }}
+                />
             </div>
         )}
   </div>
@@ -253,7 +266,7 @@ const GameOverModal: React.FC<{ gameState: GameState; onPlayAgain: () => void; o
 };
 
 
-const GameUI: React.FC<GameUIProps> = ({ gameState, isAiThinking, onReset, onEndGame, onPlayAgain, onConfirmForfeit, onActivatePowerUp }) => {
+const GameUI: React.FC<GameUIProps> = ({ gameState, isAiThinking, onReset, onEndGame, onPlayAgain, onConfirmForfeit, onActivatePowerUp, aiMoveError }) => {
   const { players, timers, currentPlayer, status, gameover, winner, activePowerUp, announcement } = gameState;
   const [localAnnouncement, setLocalAnnouncement] = useState<{ message: string; key: number } | null>(null);
 
@@ -262,7 +275,7 @@ const GameUI: React.FC<GameUIProps> = ({ gameState, isAiThinking, onReset, onEnd
         setLocalAnnouncement(announcement);
         const timer = setTimeout(() => {
             setLocalAnnouncement(null);
-        }, 4000); // Display for 4 seconds
+        }, 5000); // Display for 5 seconds
         return () => clearTimeout(timer);
     }
   }, [announcement]);
@@ -295,6 +308,11 @@ const GameUI: React.FC<GameUIProps> = ({ gameState, isAiThinking, onReset, onEnd
          {localAnnouncement && (
             <div key={localAnnouncement.key} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/80 p-4 rounded-lg border-2 border-red-500 text-red-400 text-xl font-bold animate-fade-in z-30 pointer-events-auto">
                 {localAnnouncement.message}
+            </div>
+        )}
+        {aiMoveError && (
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-24 bg-black/80 p-3 rounded-lg border-2 border-yellow-500 text-yellow-400 text-md font-bold animate-fade-in z-30 pointer-events-auto">
+                {aiMoveError}
             </div>
         )}
       </div>

@@ -4,7 +4,6 @@ import { PlayerProfile } from '../types';
 interface StartMenuProps {
   profile: PlayerProfile;
   onStartGame: () => void;
-  onShowLeaderboard: () => void;
   onShowRules: () => void;
   onShowSettings: () => void;
   onShowProfile: () => void;
@@ -42,7 +41,7 @@ const MenuButton: React.FC<MenuButtonProps> = ({ onClick, children, variant = 'p
   );
 };
 
-const StartMenu: React.FC<StartMenuProps> = ({ profile, onStartGame, onShowLeaderboard, onShowRules, onShowSettings, onShowProfile }) => {
+const StartMenu: React.FC<StartMenuProps> = ({ profile, onStartGame, onShowRules, onShowSettings, onShowProfile }) => {
   return (
     <div 
       className="min-h-screen w-full flex flex-col items-center justify-start pt-28 text-white p-4"
@@ -58,8 +57,6 @@ const StartMenu: React.FC<StartMenuProps> = ({ profile, onStartGame, onShowLeade
         <div className="flex flex-col items-center space-y-5">
           <MenuButton onClick={onStartGame} variant="primary">Play</MenuButton>
           <MenuButton onClick={onShowProfile} variant="tertiary">Profile</MenuButton>
-          {/* <MenuButton onClick={onShowLeaderboard} variant="tertiary">Leaderboard</MenuButton> */}
-          {/* Fix: Corrected typo in the closing tag. */}
           <MenuButton onClick={onShowRules} variant="tertiary">Rules</MenuButton>
           {/* <MenuButton onClick={onShowSettings} variant="secondary">Settings</MenuButton> */}
         </div>

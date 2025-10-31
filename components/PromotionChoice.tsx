@@ -16,23 +16,24 @@ const PromotionChoice: React.FC<PromotionChoiceProps> = ({ color, onPromote }) =
         <h3 className="text-2xl font-bold text-white mb-4">Promote Pawn</h3>
         <div className="flex space-x-4">
           {promotionPieces.map((pieceType) => {
+            const imageUrl = PIECE_DATA[pieceType].symbol[color];
             const isPlayerPiece = color === 'white';
-            const glowClass = isPlayerPiece ? 'animate-piece-glow' : '';
-            const textColorClass = isPlayerPiece ? 'text-orange-500' : 'text-purple-600';
-            const textShadowStyle = !isPlayerPiece ? { textShadow: '0 0 10px rgba(0, 0, 0, 0.15), 0 0 15px rgba(0, 0, 0, 0.15)' } : {};
-            
+            const glowStyle = isPlayerPiece
+              ? { filter: 'drop-shadow(0 0 4px #f97316)' }
+              : { filter: 'drop-shadow(0 0 4px #a855f7)' };
+
             return (
               <button
                 key={pieceType}
                 onClick={() => onPromote(pieceType)}
-                className="p-2 w-20 h-20 bg-gray-700 rounded-md hover:bg-purple-600 transition-colors flex items-center justify-center"
+                className="p-2 w-20 h-20 bg-gray-700 rounded-md hover:bg-purple-600 transition-colors flex items-center justify-center group"
               >
-                <span
-                  className={`text-6xl ${textColorClass} ${glowClass}`}
-                  style={textShadowStyle}
-                >
-                  {PIECE_DATA[pieceType].symbol[color]}
-                </span>
+                <img
+                  src={imageUrl}
+                  alt={pieceType}
+                  className="w-12 h-12 object-contain transition-transform duration-200 group-hover:scale-110"
+                  style={glowStyle}
+                />
               </button>
             );
           })}

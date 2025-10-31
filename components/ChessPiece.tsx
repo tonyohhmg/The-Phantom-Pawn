@@ -7,20 +7,23 @@ interface ChessPieceProps {
 }
 
 const ChessPiece: React.FC<ChessPieceProps> = ({ piece }) => {
-  const { symbol } = PIECE_DATA[piece.type];
-  const pieceSymbol = symbol[piece.color];
+  const imageUrl = PIECE_DATA[piece.type].symbol[piece.color];
   const isPlayerPiece = piece.color === 'white';
 
   const glowClass = isPlayerPiece ? 'animate-piece-glow' : '';
-  const textColorClass = isPlayerPiece ? 'text-orange-500' : 'text-purple-600';
-  const textShadowStyle = !isPlayerPiece ? { textShadow: '0 0 10px rgba(0, 0, 0, 0.15), 0 0 15px rgba(0, 0, 0, 0.15)' } : {};
+  const staticGlowStyle = !isPlayerPiece ? { filter: 'drop-shadow(0 0 4px #a855f7)' } : {};
 
   return (
     <div
-      className={`w-full h-full flex items-center justify-center text-5xl md:text-6xl lg:text-7xl ${textColorClass} ${glowClass}`}
-      style={textShadowStyle}
+      className={`w-full h-full flex items-center justify-center p-[23.5%]`}
     >
-      {pieceSymbol}
+      <img
+        src={imageUrl}
+        alt={`${piece.color} ${piece.type}`}
+        className={`w-full h-full object-contain ${glowClass}`}
+        style={staticGlowStyle}
+        draggable="false"
+      />
     </div>
   );
 };

@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { GameState, Position, PieceType, PlayerColor, PlayerProfile, PowerUp, PowerUpType, Piece, PlayerState } from '../types';
 import { INITIAL_BOARD_SETUP, AI_NAMES, GAME_TIMER_SECONDS, generateAvatarUrl, AVAILABLE_POWER_UPS } from '../constants';
-import { movePiece, checkPromotion, getRandomMove, getAllLegalMoves, isKingInCheck, isInsufficientMaterial } from '../services/chessService';
+import { movePiece, checkPromotion, getRandomMove, getAllLegalMoves, isKingInCheck, isInsufficientMaterial, isLegalMove } from '../services/chessService';
+import { getBestMove } from '../services/geminiService';
 
 const grantRandomPowerUp = (playerState: PlayerState) => {
     // New capacity is 3.
@@ -125,6 +126,12 @@ const endTurn = (
         activePowerUp: null,
         promotionPending: null,
     };
+};
+
+const coordinateToPosition = (coord: string): Position => {
+    const col = coord.charCodeAt(0) - 'a'.charCodeAt(0);
+    const row = 8 - parseInt(coord.charAt(1), 10);
+    return { row, col };
 };
 
 
@@ -364,17 +371,50 @@ export const useGameLogic = (playerProfile: PlayerProfile) => {
 
     useEffect(() => {
         if (gameState.currentPlayer === 'black' && !gameState.gameover && !gameState.promotionPending) {
-            setIsAiThinking(true);
-            setAiMoveError(null);
+            const makeAiMove = async () => {
+                setIsAiThinking(true);
+                setAiMoveError(null);
+                
+                const legalMoves = getAllLegalMoves(gameState.board, 'black', null);
+                if (legalMoves.length === 0) {
+                    setIsAiThinking(false);
+                    return;
+                }
+
+                const posToCoord = (pos: Position) => `${String.fromCharCode(97 + pos.col)}${8 - pos.row}`;
+                const legalMovesNotation = legalMoves.map(move => `${posToCoord(move.from)}${posToCoord(move.to)}`);
+
+                let move: { from: Position; to: Position } | null = null;
+                
+                try {
+                    const moveString = await getBestMove(gameState.board, 'black', legalMovesNotation);
+                    const from = coordinateToPosition(moveString.substring(0, 2));
+                    const to = coordinateToPosition(moveString.substring(2, 4));
+                    // The move is guaranteed to be legal by the service, so we just use it.
+                    move = { from, to };
+                } catch (error: any) {
+                    console.error("AI move service failed, using random fallback.", error);
+                    if (error?.message?.toLowerCase().includes('quota')) {
+                        setAiMoveError("The spirits are overwhelmed (API quota exceeded). A random move was made.");
+                    } else {
+                        setAiMoveError("The spirits are confused... a random move was made.");
+                    }
+                    // Silently fall back to a random move.
+                    move = getRandomMove(gameState.board, 'black');
+                }
     
-            const timeoutId = setTimeout(() => {
+                if (!move) {
+                    setIsAiThinking(false);
+                    return;
+                }
+    
+                const finalMove = move;
                 setGameState(prev => {
                     let board = prev.board;
                     let players = JSON.parse(JSON.stringify(prev.players));
                     let timers = { ...prev.timers };
                     let announcement = null;
     
-                    // 1. AI Power-up logic (instant effects)
                     const timeTwist = players.black.powerUps.find(p => p.type === 'timeTwist');
                     if (timeTwist && timers.black < 180) {
                         timers.black += 30;
@@ -382,21 +422,8 @@ export const useGameLogic = (playerProfile: PlayerProfile) => {
                         players.black.powerUps = players.black.powerUps.filter(p => p.id !== timeTwist.id);
                     }
     
-                    // 2. AI Move logic
-                    const move = getRandomMove(board, prev.currentPlayer);
-    
-                    if (!move) {
-                        const isKingChecked = isKingInCheck(board, 'black');
-                        return {
-                            ...prev,
-                            gameover: true,
-                            status: isKingChecked ? 'checkmate' : 'draw',
-                            winner: isKingChecked ? 'white' : null,
-                        };
-                    }
-    
-                    const { newBoard, capturedPiece } = movePiece(board, move.from, move.to);
-                    const movedPiece = board[move.from.row][move.from.col];
+                    const { newBoard, capturedPiece } = movePiece(board, finalMove.from, finalMove.to);
+                    const movedPiece = board[finalMove.from.row][finalMove.from.col];
                     board = newBoard;
     
                     if (capturedPiece) {
@@ -406,12 +433,11 @@ export const useGameLogic = (playerProfile: PlayerProfile) => {
                         }
                     }
     
-                    if (checkPromotion(board, move.to)) {
-                        const pieceToPromote = board[move.to.row][move.to.col];
+                    if (checkPromotion(board, finalMove.to)) {
+                        const pieceToPromote = board[finalMove.to.row][finalMove.to.col];
                         if (pieceToPromote) pieceToPromote.type = 'queen';
                     }
 
-                    // 3. Phantom Thief Event
                     const PHANTOM_THIEF_CHANCE = 0.1;
                     if (Math.random() < PHANTOM_THIEF_CHANCE && !players.white.stolenPiece) {
                         const eligiblePieces: {piece: Piece, pos: Position}[] = [];
@@ -439,16 +465,18 @@ export const useGameLogic = (playerProfile: PlayerProfile) => {
                         ...turnEndState,
                         timers,
                         announcement,
-                        lastCapturePosition: capturedPiece ? { position: move.to, key: Date.now() } : null,
+                        lastCapturePosition: capturedPiece ? { position: finalMove.to, key: Date.now() } : null,
                         moveCount: prev.moveCount + 1,
                     };
                 });
+                
                 setIsAiThinking(false);
-            }, Math.random() * 1000 + 1500);
+            };
     
-            return () => clearTimeout(timeoutId);
+            const thinkingTimeout = setTimeout(makeAiMove, 1500);
+            return () => clearTimeout(thinkingTimeout);
         }
-    }, [gameState.currentPlayer, gameState.gameover, gameState.promotionPending]);
+    }, [gameState.currentPlayer, gameState.gameover, gameState.promotionPending, gameState.board]);
 
     return { gameState, isAiThinking, aiMoveError, handleMove, resetGame, handlePromotion, handleActivatePowerUp, handlePlacePawn, handlePossessionMove, handleEtherealEscape, handlePlaceStolenPiece };
 };
